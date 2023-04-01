@@ -118,7 +118,7 @@ class keyboard:
     def optimize_counts(self, data):
         counts = np.zeros(len(self.keys))
         for i in range(len(data)):
-            string = data.iloc[i].lower()
+            string = data.iloc[i]
             for key in string:
                 if key in self.keys:
                     counts[self.keys.index(key)] += 1
