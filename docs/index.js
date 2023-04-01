@@ -331,27 +331,11 @@ function getStatistics() {
     'r1',
     'r1',
   ]
-  const totalTime = (endTime - startTime) / 1000
   const dtArr = [
     1.03, 1.03, 1.03, 1.03, 1.25, 1.6, 1.03, 1.03, 1.03, 1.03, 0.0, 0.0, 0.0,
     0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.12, 1.12, 1.12, 1.12, 1.8, 1.12, 1.12,
   ]
 
-  // const distanceTravelled = Array.from(typedText).reduce((acc, cur) => {
-  //   if (
-  //     cur === ' ' ||
-  //     cur === ',' ||
-  //     cur === '.' ||
-  //     cur === ';' ||
-  //     cur === ';'
-  //   ) {
-  //     return acc
-  //   } else {
-  //     return acc + dtArr[keyboardConfigs[curLayoutKey].position.indexOf(cur)]
-  //   }
-  // }, 0)
-
-  // $('#wpm').text(distanceTravelled.toFixed(2))
   Object.keys(keyboardConfigs).forEach((key) => {
     const distanceTravelled = Array.from(typedText).reduce(
       (acc, cur, index) => {
@@ -361,22 +345,19 @@ function getStatistics() {
           cur === ',' ||
           cur === '.' ||
           cur === ';' ||
-          cur === ';'
+          cur === typedText.charAt(index - 1)
         ) {
           value = acc
         } else {
-          value = acc + dtArr[keyboardConfigs[key].position.indexOf(cur)]
-        }
-
-        if (index !== 0) {
-          const currFinger = fingers[keyboardConfigs[key].position.indexOf(cur)]
-          const prevFinger =
-            fingers[keyboardConfigs[key].position.indexOf(typedText[index - 1])]
-          if (currFinger === prevFinger) {
-            value += 0.2
+            value = acc + dtArr[keyboardConfigs[key].position.indexOf(cur)]
+            if (index !== 0) {
+              const currFinger = fingers[keyboardConfigs[key].position.indexOf(cur)]
+              const prevFinger = fingers[keyboardConfigs[key].position.indexOf(typedText[index - 1])]
+              if (currFinger === prevFinger) {
+                value += 0.2
+              }  
           }
         }
-
         return value
       },
       0
