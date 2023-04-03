@@ -39,7 +39,7 @@ How exactly do we determine if a key config is better or worse than another? We 
 
 It is here that we have to make an assumption considering the most widespread method used to type: the standard QWERTY layout with default key assignments to the fingers.
 
-![could not load finger-placement image](https://www.researchgate.net/profile/Mahmut-Eksioglu/publication/274641777/figure/fig1/AS:601677157650446@1520462421283/Standard-positions-of-the-fingers-on-a-conventional-QWERTY-keyboard-for-touch-typing.png)
+![could not load finger-placement image](https://www.readandspell.com/sites/default/files/fingerplacement.png)
 
 The row offsets of the standard QWERTY keyboard are also fixed for consideration. To postulate our assumption in formal terms: 
 
