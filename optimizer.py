@@ -94,20 +94,20 @@ class keyboard:
                 last_key = -1
         return loss
     
-    def total_loss(self, data, batch_size = 1000, batches = True):
-        loss = 0.0
-        if batches:
-            if len(data) > batch_size:
-                for chunk in np.array_split(data, len(data) // batch_size):
-                    string = chunk.str.cat(sep = '').lower()
-                    loss += self.calc_loss(string)
-            else:
-                string = data.str.cat(sep = '').lower()
-                loss += self.calc_loss(string)
-        else:
-            string = data.str.cat(sep = '').lower()
-            loss += self.calc_loss(string)
-        return round(loss, 2)
+    # def total_loss(self, data, batch_size = 1000, batches = True):
+    #     loss = 0.0
+    #     if batches:
+    #         if len(data) > batch_size:
+    #             for chunk in np.array_split(data, len(data) // batch_size):
+    #                 string = chunk.str.cat(sep = '').lower()
+    #                 loss += self.calc_loss(string)
+    #         else:
+    #             string = data.str.cat(sep = '').lower()
+    #             loss += self.calc_loss(string)
+    #     else:
+    #         string = data.str.cat(sep = '').lower()
+    #         loss += self.calc_loss(string)
+    #     return round(loss, 2)
 
     def make_next_configs(self):
         next_configs = [deepcopy(self) for i in range(len(self.transitions))]
@@ -115,7 +115,7 @@ class keyboard:
             next_configs[i].swap(self.transitions[i])
         return next_configs
 
-    def optimize_counts(self, data):
+    def optimize_counts(self, data, npartitions = 100, penalty = 0.2):
         counts = np.zeros(len(self.keys))
         for i in range(len(data)):
             string = data.iloc[i]
@@ -124,10 +124,10 @@ class keyboard:
                     counts[self.keys.index(key)] += 1
         print('Initial key config:')
         self.printkeys()
-        chunks = bag.from_sequence(data, npartitions = 100)
+        chunks = bag.from_sequence(data, npartitions = npartitions)
         concatenated_chunks = chunks.map_partitions(concatenate_strings).compute()
         concatenated_chunks = bag.from_sequence(concatenated_chunks, npartitions = len(concatenated_chunks))
-        initial_loss = concatenated_chunks.map(self.calc_loss).sum().compute()
+        initial_loss = concatenated_chunks.map(self.calc_loss, penalty = penalty).sum().compute()
         print('Initial loss: ', initial_loss)
         rank = np.argsort(counts)[::-1]
         j = 0
@@ -142,43 +142,43 @@ class keyboard:
         count_optimized_loss = concatenated_chunks.map(self.calc_loss).sum().compute()
         print('Count optimized loss: ', count_optimized_loss)
         
-    def fast_optimize_heuristic(self, data):
-        trans_count = 0
-        epoch = 1
-        flag = True
-        print('Initial key config:')
-        self.printkeys()
-        print('Initial loss: ', min_loss)
-        while flag:
-            flag = False
-            for i in range(len(self.transitions)):
-                self.swap(self.transitions[i])
-                trans_loss = self.total_loss(data)
-                if trans_loss < min_loss:
-                    min_loss = trans_loss
-                    trans_count += 1
-                    flag = True
-                else:
-                    self.swap(self.transitions[i])
-            if flag:
-                print('Epoch: ', epoch)
-                print('Transition(s) made: ', trans_count)
+    # def fast_optimize_heuristic(self, data):
+    #     trans_count = 0
+    #     epoch = 1
+    #     flag = True
+    #     print('Initial key config:')
+    #     self.printkeys()
+    #     print('Initial loss: ', min_loss)
+    #     while flag:
+    #         flag = False
+    #         for i in range(len(self.transitions)):
+    #             self.swap(self.transitions[i])
+    #             trans_loss = self.total_loss(data)
+    #             if trans_loss < min_loss:
+    #                 min_loss = trans_loss
+    #                 trans_count += 1
+    #                 flag = True
+    #             else:
+    #                 self.swap(self.transitions[i])
+    #         if flag:
+    #             print('Epoch: ', epoch)
+    #             print('Transition(s) made: ', trans_count)
                 
-                print('Key config:')
-                self.printkeys()
-                print('Loss: ', min_loss)
-                epoch += 1
-                trans_count = 0
-        print('Optimized key config:')
-        self.printkeys()
+    #             print('Key config:')
+    #             self.printkeys()
+    #             print('Loss: ', min_loss)
+    #             epoch += 1
+    #             trans_count = 0
+    #     print('Optimized key config:')
+    #     self.printkeys()
     
-    def slow_optimize_heuristic(self, data):
+    def slow_optimize_heuristic(self, data, npartitions=100, penalty = 0.2):
         print('Initial Key Config:')
         self.printkeys()
-        chunks = bag.from_sequence(data, npartitions = 100)
+        chunks = bag.from_sequence(data, npartitions = npartitions)
         concatenated_chunks = chunks.map_partitions(concatenate_strings).compute()
         concatenated_chunks = bag.from_sequence(concatenated_chunks, npartitions = len(concatenated_chunks))
-        current_loss = concatenated_chunks.map(self.calc_loss).sum().compute()
+        current_loss = concatenated_chunks.map(self.calc_loss, penalty = penalty).sum().compute()
         print('Loss: ', current_loss)
         def array_sum(arr1, arr2):
             return arr1 + arr2
@@ -190,7 +190,7 @@ class keyboard:
                 print("Epoch: ", epoch)
                 flag = False
                 next_configs = self.make_next_configs()
-                transition_loss = concatenated_chunks.map(self.cumulative_calc_loss, next_configs = next_configs).fold(array_sum).compute()
+                transition_loss = concatenated_chunks.map(self.cumulative_calc_loss, next_configs = next_configs, penalty = penalty).fold(array_sum).compute()
                 best_transition = np.argsort(transition_loss)[0]
                 if transition_loss[best_transition] < current_loss:
                     flag = True
